@@ -16,6 +16,8 @@ public class LibraryBookLoan {
     private Borrower borrower;
     @DBRef
     private Book book;
+    private User user;
+    private String bookId;
     private LocalDateTime borrowDate = LocalDateTime.now();
     private LocalDateTime returnDate;
 

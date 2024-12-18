@@ -1,6 +1,5 @@
 package org.africa.semicolon.jlims.services;
 
-import org.africa.semicolon.jlims.data.models.Borrower;
 import org.africa.semicolon.jlims.dtos.request.*;
 import org.africa.semicolon.jlims.dtos.response.*;
 

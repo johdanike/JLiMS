@@ -8,8 +8,10 @@ import org.africa.semicolon.jlims.data.repositories.Borrowers;
 import org.africa.semicolon.jlims.data.repositories.Users;
 import org.africa.semicolon.jlims.dtos.request.AccountRegisterRequest;
 import org.africa.semicolon.jlims.dtos.request.AddBookRequest;
+import org.africa.semicolon.jlims.dtos.request.BorrowBookRequest;
 import org.africa.semicolon.jlims.dtos.response.AccountRegisterResponse;
 import org.africa.semicolon.jlims.dtos.response.AddBookResponse;
+import org.africa.semicolon.jlims.dtos.response.BorrowBookResponse;
 import org.africa.semicolon.jlims.exceptions.UserAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,6 +36,7 @@ public class UserServiceImplTest {
     private Borrowers borrowers;
 
     private AddBookRequest addBookRequest;
+    private BorrowBookRequest borrowBookRequest;
 
     @BeforeEach
     public void setUp() {
@@ -55,8 +59,12 @@ public class UserServiceImplTest {
         addBookRequest.setIsAvailable("Yes");
         addBookRequest.setQuantity(10);
 
-
-
+        borrowBookRequest = new BorrowBookRequest();
+        borrowBookRequest.setUsername(accountRegisterRequest.getUsername());
+        borrowBookRequest.setBookType(addBookRequest.getBookType());
+        borrowBookRequest.setQuantity(addBookRequest.getQuantity());
+        borrowBookRequest.setBookName("Things fall apart");
+        borrowBookRequest.setAuthor("Chinua Achebe");
 
     }
 
@@ -86,9 +94,25 @@ public class UserServiceImplTest {
         userService.register(accountRegisterRequest);
         assertEquals(0L, books.count());
 
-        userService.addBook(addBookRequest);
-//        assertEquals("Book added successfully", response);
-//        assertEquals(1L, books.count());
+        AddBookResponse addBookResponse = userService.addBook(addBookRequest);
+        assertEquals("Book added successfully", addBookResponse.getMessage());
+        assertEquals(1L, books.count());
+
+        Integer bookQuantity = addBookResponse.getBookQuantity();
+        assertEquals(10 , bookQuantity);
+    }
+    @Test
+    public void i_borrowExistingBook_bookCountIsStill1_bookQuantityDecreasesByOne_Test() {
+        userService.register(accountRegisterRequest);
+        assertEquals(0L, books.count());
+
+        AddBookResponse addBookResponse = userService.addBook(addBookRequest);
+        assertEquals("Book added successfully", addBookResponse.getMessage());
+
+        BorrowBookResponse borrowBookResponse = userService.borrowBook(borrowBookRequest);
+        assertEquals("Book borrowed successfully", borrowBookResponse.getMessage());
+        assertEquals(1L, books.count());
+//        assertEquals(9, addBookResponse.getBookQuantity());
     }
 
 
