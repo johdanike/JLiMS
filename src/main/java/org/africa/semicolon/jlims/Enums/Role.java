@@ -1,4 +1,4 @@
-package org.africa.semicolon.jlims.data.models;
+package org.africa.semicolon.jlims.Enums;
 
 public enum Role {
     MEMBER,
