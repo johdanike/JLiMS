@@ -37,14 +37,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public boolean login(LoginRequest request) {
-        return false;
+    public LogInResponse logIn(LoginRequest loginRequest) {
+        return null;
     }
 
     @Override
-    public boolean logout() {
-        return false;
+    public LogOutResponse logOut(LogOutRequest logOutRequest) {
+        return null;
     }
+
 
     private void checkIfUserAlreadyExists(String username) {
         if(users.findByUsername(username) != null)
