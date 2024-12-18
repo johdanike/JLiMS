@@ -5,7 +5,7 @@ import org.africa.semicolon.jlims.dtos.response.*;
 
 public interface AuthenticationService {
     AccountRegisterResponse register(AccountRegisterRequest request);
-    boolean login(LoginRequest request);
-    boolean logout();
+    LogInResponse logIn(LoginRequest loginRequest);
+    LogOutResponse logOut(LogOutRequest logOutRequest);
 }
 

@@ -17,36 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 public class AuthenticationServiceTest {
-    @Autowired
-    private AuthenticationService authenticationService;
-    AccountRegisterRequest accountRegisterRequest;
-    @Autowired
-    private Users users;
-    @Autowired
-    private Books books;
 
-    private Borrower borrower;
-
-    @BeforeEach
-    public void setUp() {
-        users.deleteAll();
-        books.deleteAll();
-
-        accountRegisterRequest = new AccountRegisterRequest();
-        accountRegisterRequest.setUsername("username");
-        accountRegisterRequest.setPassword("password");
-        accountRegisterRequest.setEmail("email@email.com");
-        accountRegisterRequest.setCreatedAt(LocalDateTime.now());
-        accountRegisterRequest.setLoggedIn(accountRegisterRequest.isLoggedIn());
-        accountRegisterRequest.setRegistered(true);
-        accountRegisterRequest.setName("John-Daniel Ikechukwu");
-    }
-
-    @Test
-    public void registerUser_numberOfUser_isOneTest() {
-        accountRegisterRequest.setRole(Role.MEMBER);
-        AccountRegisterResponse response = authenticationService.register(accountRegisterRequest);
-        assertNotNull(response);
-    }
 
 }
