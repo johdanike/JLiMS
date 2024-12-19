@@ -1,7 +1,6 @@
 package org.africa.semicolon.jlims.services;
 
 import org.africa.semicolon.jlims.data.models.Book;
-import org.africa.semicolon.jlims.data.models.Borrower;
 import org.africa.semicolon.jlims.data.models.LibraryBookLoan;
 import org.africa.semicolon.jlims.data.models.User;
 import org.africa.semicolon.jlims.data.repositories.Books;
@@ -17,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -34,6 +34,16 @@ public class UserServiceImpl implements UserService {
     public AccountRegisterResponse register(AccountRegisterRequest registerRequest) {
         usernameValidator(registerRequest);
 
+        User user = getUserDetails(registerRequest);
+
+        AccountRegisterResponse response = new AccountRegisterResponse();
+        response.setUsername(user.getUsername());
+        response.setId(user.getId());
+        response.setMessage("User created successfully");
+        return response;
+    }
+
+    private User getUserDetails(AccountRegisterRequest registerRequest) {
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setPassword(registerRequest.getPassword());
@@ -44,12 +54,7 @@ public class UserServiceImpl implements UserService {
         user.setCreatedAt(registerRequest.getCreatedAt());
         user.setLastLogin(LocalDateTime.now());
         users.save(user);
-
-        AccountRegisterResponse response = new AccountRegisterResponse();
-        response.setUsername(user.getUsername());
-        response.setId(user.getId());
-        response.setMessage("User created successfully");
-        return response;
+        return user;
     }
 
 //    @Override
@@ -65,13 +70,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public AddBookResponse addBook(AddBookRequest addBookRequest) {
         bookExistsValidator(addBookRequest.getTitle(), addBookRequest.getAuthor());
-        Book book = new Book();
-        book.setTitle(addBookRequest.getTitle());
-        book.setAuthor(addBookRequest.getAuthor());
-        book.setBookType(addBookRequest.getBookType());
-        book.setIsAvailable(addBookRequest.getIsAvailable());
-        book.setQuantity(addBookRequest.getQuantity());
-        books.save(book);
+        Book book = getBookDetails(addBookRequest);
 
         AddBookResponse response = new AddBookResponse();
         response.setBookName(book.getTitle());
@@ -80,40 +79,74 @@ public class UserServiceImpl implements UserService {
         return response;
     }
 
+    private Book getBookDetails(AddBookRequest addBookRequest) {
+        Book book = new Book();
+        book.setTitle(addBookRequest.getTitle());
+        book.setAuthor(addBookRequest.getAuthor());
+        book.setBookType(addBookRequest.getBookType());
+        book.setIsAvailable(addBookRequest.getIsAvailable());
+        book.setQuantity(addBookRequest.getQuantity());
+        books.save(book);
+        return book;
+    }
+
     @Override
     public BorrowBookResponse borrowBook(BorrowBookRequest borrowBookRequest) {
         User registeredMember = findUserBy(borrowBookRequest.getUsername());
         usernameValidator(registeredMember);
 
-        String bookId = borrowBookRequest.getBookId();
-        bookExistsValidator(borrowBookRequest.getBookName(), borrowBookRequest.getAuthor());
+        newBookQuantityAfterBorrow(borrowBookRequest);
 
+        String bookId = borrowBookRequest.getBookId();
         createNewBorrowBookRequest result = getCreateNewBorrowBookRequest(borrowBookRequest, bookId, registeredMember);
         libraryBookLoans.save(result.newLoan());
-        LibraryBookLoan loan = libraryBookLoans.findByUserAndBookId(registeredMember, bookId);
 
+        LibraryBookLoan loan = libraryBookLoans.findByUserAndBookId(registeredMember, bookId);
         return loan != null ? result.response() : null;
     }
 
     private createNewBorrowBookRequest getCreateNewBorrowBookRequest(BorrowBookRequest borrowBookRequest, String bookId, User registeredMember) {
         BorrowBookResponse response = new BorrowBookResponse();
-        response.setBookId(bookId);
+        response.setBookId(borrowBookRequest.getBookId());
         response.setMessage("Book borrowed successfully");
         response.setAuthor(borrowBookRequest.getAuthor());
         response.setBookName(borrowBookRequest.getBookName());
+        response.setQuantity(borrowBookRequest.getQuantity() - 1);  // Adjust quantity for the response
 
         LibraryBookLoan newLoan = new LibraryBookLoan();
-        newLoan.setUser(registeredMember);
         newLoan.setBorrowDate(LocalDateTime.now());
-        newLoan.setReturnDate(null);
-        newLoan.setBookId(bookId);
+        newLoan.setReturnDate(null);  // Set return date later
+        newLoan.setBookId(borrowBookRequest.getBookId());
+        newLoan.setQuantity(borrowBookRequest.getQuantity() - 1);  // Decrement quantity by 1 for the loan
+
         newLoan.setBorrower(borrowers.findByMember(registeredMember));
+
         return new createNewBorrowBookRequest(response, newLoan);
+    }
+
+    private void newBookQuantityAfterBorrow(BorrowBookRequest borrowBookRequest) {
+        bookExistsValidator(borrowBookRequest.getBookName(), borrowBookRequest.getAuthor());
+
+        Optional<Book> numOfBooks = books.findById(borrowBookRequest.getBookId());
+        if (numOfBooks.isEmpty()) {
+            throw new IllegalArgumentException("Book not found");
+        }
+
+        int presentBookQuantity = numOfBooks.get().getQuantity();
+        if (presentBookQuantity <= 0) {
+            throw new IllegalArgumentException("Book is currently out of stock, mind checking another book?");
+        }
+
+        if (presentBookQuantity < borrowBookRequest.getQuantity()) {
+            throw new IllegalArgumentException("We currently have fewer copies available to borrow. Approx. %d copies available.".formatted(presentBookQuantity));
+        }
+
+        numOfBooks.get().setQuantity(presentBookQuantity - borrowBookRequest.getQuantity());
+        books.save(numOfBooks.get());
     }
 
     private record createNewBorrowBookRequest(BorrowBookResponse response, LibraryBookLoan newLoan) {
     }
-
 
     @Override
     public ReturnBookResponse returnBook(ReturnBookRequest returnBookRequest) {
@@ -125,15 +158,16 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
-    private Book getBook(){
-        return books.findAll().getFirst();
-    }
-    private User getUser(){
-        return users.findAll().getFirst();
-    }
-    private Borrower getBorrower(){
-        return borrowers.findByMember(getUser());
-    }
+//    private Optional<Book> getBook(String bookId) {
+//        return books.findByBookId(bookId);
+//        return books.findAll().getFirst();
+//    }
+//    private User getUser(){
+//        return users.findAll().getFirst();
+//    }
+//    private Borrower getBorrower(){
+//        return borrowers.findByMember(getUser());
+//    }
 
     private void validateThatUserIsLoggedIn(User user){
         if(!user.isLoggedIn()){

@@ -30,20 +30,39 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setCreatedAt(registerRequest.getCreatedAt());
         users.save(user);
         AccountRegisterResponse response = new AccountRegisterResponse();
+        response.setId(user.getId());
         response.setUsername(user.getUsername());
         response.setMessage("Successfully registered");
-        response.setId(user.getId());
         return response;
     }
 
     @Override
-    public LogInResponse logIn(LoginRequest loginRequest) {
-        return null;
+    public boolean logIn(LoginRequest loginRequest) {
+        User user = this.users.findByUsername(loginRequest.getUsername());
+        if (user == null || loginRequest.getUsername() == null || !user.getPassword().equals(loginRequest.getPassword())
+                || !user.getUsername().equals(loginRequest.getUsername())) {
+            throw new IllegalArgumentException("Invalid username or password");
+        }
+//        assert user != null;
+        user.setLoggedIn(true);
+        System.out.println("Logged In Successfully");
+        return user.isLoggedIn();
     }
 
     @Override
-    public LogOutResponse logOut(LogOutRequest logOutRequest) {
-        return null;
+    public boolean logOut() {
+        User user = getCurrentUser();
+        user.setLoggedIn(false);
+        users.save(user);
+        return true;
+    }
+
+    private User getCurrentUser() {
+        User user = new User();
+        if(users.findByUsername(user.getUsername()) != null || user.isLoggedIn()) {
+            return users.findByUsername(user.getUsername());
+        }
+        return user;
     }
 
 

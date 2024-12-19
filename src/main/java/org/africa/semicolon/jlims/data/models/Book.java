@@ -21,4 +21,5 @@ public class Book {
         String format = "Book{\nid = '%s'\nauthor = '%s'\nbookType = '%s'\nquantity = %d\nisAvailable = '%s'\n}";
         return String.format(format, id, author, bookType, quantity, isAvailable);
     }
+
 }

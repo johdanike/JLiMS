@@ -17,9 +17,11 @@ public class LibraryBookLoan {
     @DBRef
     private Book book;
     private User user;
+    @DBRef
     private String bookId;
     private LocalDateTime borrowDate = LocalDateTime.now();
     private LocalDateTime returnDate;
+    private Integer quantity;
 
     @Override
     public String toString() {

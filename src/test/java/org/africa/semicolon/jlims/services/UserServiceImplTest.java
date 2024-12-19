@@ -60,6 +60,9 @@ public class UserServiceImplTest {
         addBookRequest.setQuantity(10);
 
         borrowBookRequest = new BorrowBookRequest();
+        borrowBookRequest.setName(accountRegisterRequest.getName());
+        borrowBookRequest.setRole(Role.MEMBER);
+        borrowBookRequest.setBookId(borrowBookRequest.getBookId());
         borrowBookRequest.setUsername(accountRegisterRequest.getUsername());
         borrowBookRequest.setBookType(addBookRequest.getBookType());
         borrowBookRequest.setQuantity(addBookRequest.getQuantity());
@@ -75,11 +78,13 @@ public class UserServiceImplTest {
         assertNotNull(response);
         assertEquals(1L, users.count());
     }
+
     @Test
     public void i_registerUserTwice_countIsStillOne_Test() {
         userService.register(accountRegisterRequest);
         assertEquals(1L, users.count());
     }
+
     @Test
     public void i_registerUserTwice_throwException_Test() {
         userService.register(accountRegisterRequest);
@@ -89,8 +94,19 @@ public class UserServiceImplTest {
             assertEquals(e.getMessage(), "User already exists");
         }
     }
+
     @Test
     public void iAddOneBook_bookCountIsOne_Test() {
+        userService.register(accountRegisterRequest);
+        assertEquals(0L, books.count());
+
+        AddBookResponse addBookResponse = userService.addBook(addBookRequest);
+        assertEquals("Book added successfully", addBookResponse.getMessage());
+        assertEquals(1L, books.count());
+    }
+
+    @Test
+    public void i_addABookThatIs10InNumber_bookCountIs1_quantityIs10_test(){
         userService.register(accountRegisterRequest);
         assertEquals(0L, books.count());
 
@@ -101,18 +117,22 @@ public class UserServiceImplTest {
         Integer bookQuantity = addBookResponse.getBookQuantity();
         assertEquals(10 , bookQuantity);
     }
+
     @Test
     public void i_borrowExistingBook_bookCountIsStill1_bookQuantityDecreasesByOne_Test() {
+        accountRegisterRequest.setRole(Role.MEMBER);
         userService.register(accountRegisterRequest);
         assertEquals(0L, books.count());
 
         AddBookResponse addBookResponse = userService.addBook(addBookRequest);
         assertEquals("Book added successfully", addBookResponse.getMessage());
 
+        System.out.println(borrowBookRequest.getBookId());
+
         BorrowBookResponse borrowBookResponse = userService.borrowBook(borrowBookRequest);
         assertEquals("Book borrowed successfully", borrowBookResponse.getMessage());
         assertEquals(1L, books.count());
-//        assertEquals(9, addBookResponse.getBookQuantity());
+        assertEquals(9, addBookResponse.getBookQuantity());
     }
 
 
