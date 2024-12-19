@@ -128,18 +128,16 @@ public class UserServiceImpl implements UserService {
         bookExistsValidator(borrowBookRequest.getBookName(), borrowBookRequest.getAuthor());
 
         Optional<Book> numOfBooks = books.findById(borrowBookRequest.getBookId());
-        if (numOfBooks.isEmpty()) {
+
+        if (numOfBooks.isEmpty())
             throw new IllegalArgumentException("Book not found");
-        }
-
         int presentBookQuantity = numOfBooks.get().getQuantity();
-        if (presentBookQuantity <= 0) {
-            throw new IllegalArgumentException("Book is currently out of stock, mind checking another book?");
-        }
-
-        if (presentBookQuantity < borrowBookRequest.getQuantity()) {
-            throw new IllegalArgumentException("We currently have fewer copies available to borrow. Approx. %d copies available.".formatted(presentBookQuantity));
-        }
+        if (presentBookQuantity <= 0)
+            throw new IllegalArgumentException("Book is currently out of stock, " +
+                    "mind checking another book?");
+        if (presentBookQuantity < borrowBookRequest.getQuantity())
+            throw new IllegalArgumentException(("We currently have fewer copies available to borrow. " +
+                    "Approx. %d copies available.").formatted(presentBookQuantity));
 
         numOfBooks.get().setQuantity(presentBookQuantity - borrowBookRequest.getQuantity());
         books.save(numOfBooks.get());
@@ -158,10 +156,6 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
-//    private Optional<Book> getBook(String bookId) {
-//        return books.findByBookId(bookId);
-//        return books.findAll().getFirst();
-//    }
 //    private User getUser(){
 //        return users.findAll().getFirst();
 //    }
