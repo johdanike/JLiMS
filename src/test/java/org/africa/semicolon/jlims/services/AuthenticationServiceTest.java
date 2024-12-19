@@ -4,7 +4,7 @@ import org.africa.semicolon.jlims.data.repositories.Users;
 import org.africa.semicolon.jlims.dtos.request.AccountRegisterRequest;
 import org.africa.semicolon.jlims.dtos.request.LoginRequest;
 import org.africa.semicolon.jlims.dtos.response.AccountRegisterResponse;
-import org.africa.semicolon.jlims.dtos.response.LogOutResponse;
+import org.africa.semicolon.jlims.exceptions.UserAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,16 +85,24 @@ public class AuthenticationServiceTest {
         loginRequest.setUsername("Lagbaja");
         loginRequest.setPassword("password");
 
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+        IllegalArgumentException throwException = assertThrows(IllegalArgumentException.class, () -> {
             authenticationService.logIn(loginRequest);
         });
 
-        assertEquals("Invalid username or password", thrown.getMessage());
+        assertEquals("Invalid username or password", throwException.getMessage());
     }
 
     @Test
     public void test_thatUserCannotRegisterSameNameMoreThanOnce_throwsException() {
+        accountRegisterRequest.setLoggedIn(false);
+        AccountRegisterResponse accountRegisterResponse = authenticationService.register(accountRegisterRequest);
+        assertNotNull(accountRegisterResponse);
 
+        UserAlreadyExistsException throwException = assertThrows(UserAlreadyExistsException.class, () -> {
+            AccountRegisterResponse accountRegisterResponse2 = authenticationService.register(accountRegisterRequest);
+            assertNotNull(accountRegisterResponse2);
+        });
+        assertTrue(throwException.getMessage().contains("Username " + accountRegisterResponse.getUsername() + " already exists!"));
     }
 
 

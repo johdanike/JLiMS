@@ -40,10 +40,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public boolean logIn(LoginRequest loginRequest) {
         User user = this.users.findByUsername(loginRequest.getUsername());
         if (user == null || loginRequest.getUsername() == null || !user.getPassword().equals(loginRequest.getPassword())
+
                 || !user.getUsername().equals(loginRequest.getUsername())) {
             throw new IllegalArgumentException("Invalid username or password");
         }
-//        assert user != null;
         user.setLoggedIn(true);
         System.out.println("Logged In Successfully");
         return user.isLoggedIn();
